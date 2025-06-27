@@ -74,11 +74,11 @@ export default function AlohaLiveSimulator() {
       <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
         <div style={{ width: '100%', maxWidth: 600 }}>
           <h2 style={{ textAlign: 'center' }}>Pure ALOHA</h2>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={400}>
             <BarChart data={pureData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="round" hide />
-              <YAxis allowDecimals={false} />
+              <YAxis domain={[0, 2]} allowDecimals={false} />
               <Tooltip />
               <Legend />
               <Bar dataKey="success" fill="#10B981" name="Success" />
@@ -88,11 +88,11 @@ export default function AlohaLiveSimulator() {
         </div>
         <div style={{ width: '100%', maxWidth: 600 }}>
           <h2 style={{ textAlign: 'center' }}>Slotted ALOHA</h2>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={400}>
             <BarChart data={slottedData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="round" hide />
-              <YAxis allowDecimals={false} />
+              <YAxis domain={[0, 2]} allowDecimals={false} />
               <Tooltip />
               <Legend />
               <Bar dataKey="success" fill="#3B82F6" name="Success" />
