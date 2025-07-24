@@ -78,7 +78,7 @@ export default function AlohaLiveSimulator() {
             <BarChart data={pureData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="round" hide />
-              <YAxis domain={[0, 2]} allowDecimals={false} />
+              <YAxis domain={[0, 1]} allowDecimals={false} />
               <Tooltip />
               <Legend />
               <Bar dataKey="success" fill="#10B981" name="Success" />
@@ -92,7 +92,7 @@ export default function AlohaLiveSimulator() {
             <BarChart data={slottedData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="round" hide />
-              <YAxis domain={[0, 2]} allowDecimals={false} />
+              <YAxis domain={[0, 1]} allowDecimals={false} />
               <Tooltip />
               <Legend />
               <Bar dataKey="success" fill="#3B82F6" name="Success" />
