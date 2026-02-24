@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aloha vs. Slotted Aloha IoT Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            background-color: #111827; /* bg-gray-900 */
+            border-radius: 0.5rem;
+            border: 1px solid #374151; /* border-gray-700 */
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-screen-2xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-400">Aloha vs. Slotted Aloha: Side-by-Side</h1>
+            <p class="text-lg text-gray-400 mt-2">Run and compare both protocols simultaneously</p>
+        </header>
+
+        <!-- Master Controls -->
+        <div class="flex justify-center space-x-4 mb-6 bg-gray-900 p-4 rounded-lg shadow-lg">
+            <button id="btn-start-pause" class="w-48 py-3 px-4 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-xl transition-colors">Start</button>
+            <button id="btn-reset" class="w-48 py-3 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-xl transition-colors">Reset All</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Pure Aloha Column -->
+            <div class="flex flex-col gap-6 p-4 bg-gray-900/50 rounded-lg border border-red-500/30">
+                <h2 class="text-2xl font-bold text-center text-red-400">Pure Aloha Network</h2>
+                <!-- Sim Canvas -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl"><canvas id="simCanvasPure"></canvas></div>
+                <!-- Controls -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                    <div class="mb-4">
+                        <label for="node-count-pure" class="block text-sm font-medium text-gray-300">Nodes: <span id="node-count-label-pure" class="font-bold text-red-400">30</span></label>
+                        <input id="node-count-pure" type="range" min="5" max="50" value="30" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="offered-load-pure" class="block text-sm font-medium text-gray-300">Offered Load (G): <span id="offered-load-label-pure" class="font-bold text-red-400">0.5</span></label>
+                        <input id="offered-load-pure" type="range" min="1" max="40" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                <!-- Stats -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                     <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-gray-400">Attempts</span><span id="stat-total-pure" class="font-bold text-lg text-white">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-green-400">Success</span><span id="stat-success-pure" class="font-bold text-lg text-green-400">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-red-400">Collisions</span><span id="stat-collision-pure" class="font-bold text-lg text-red-400">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-indigo-400">Throughput</span><span id="stat-throughput-pure" class="font-bold text-lg text-indigo-400">0.00%</span></div>
+                    </div>
+                </div>
+                 <!-- Attempts Graph -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                    <h3 class="text-lg font-semibold text-center mb-2">Real-Time Attempts</h3>
+                    <canvas id="attemptsChartPure"></canvas>
+                </div>
+            </div>
+
+            <!-- Slotted Aloha Column -->
+             <div class="flex flex-col gap-6 p-4 bg-gray-900/50 rounded-lg border border-green-500/30">
+                <h2 class="text-2xl font-bold text-center text-green-400">Slotted Aloha Network</h2>
+                <!-- Sim Canvas -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                    <canvas id="simCanvasSlotted"></canvas>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5 mt-4">
+                        <div id="slot-timer-bar-slotted" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                    <div class="mb-4">
+                        <label for="node-count-slotted" class="block text-sm font-medium text-gray-300">Nodes: <span id="node-count-label-slotted" class="font-bold text-green-400">30</span></label>
+                        <input id="node-count-slotted" type="range" min="5" max="50" value="30" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="offered-load-slotted" class="block text-sm font-medium text-gray-300">Offered Load (G): <span id="offered-load-label-slotted" class="font-bold text-green-400">1.0</span></label>
+                        <input id="offered-load-slotted" type="range" min="1" max="40" value="10" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                <!-- Stats -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                     <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-gray-400">Attempts</span><span id="stat-total-slotted" class="font-bold text-lg text-white">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-green-400">Success</span><span id="stat-success-slotted" class="font-bold text-lg text-green-400">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-red-400">Collisions</span><span id="stat-collision-slotted" class="font-bold text-lg text-red-400">0</span></div>
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded-md"><span class="font-medium text-indigo-400">Throughput</span><span id="stat-throughput-slotted" class="font-bold text-lg text-indigo-400">0.00%</span></div>
+                    </div>
+                </div>
+                 <!-- Attempts Graph -->
+                <div class="bg-gray-900 p-4 rounded-lg shadow-2xl">
+                    <h3 class="text-lg font-semibold text-center mb-2">Real-Time Attempts</h3>
+                    <canvas id="attemptsChartSlotted"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Combined Throughput Graph -->
+        <div class="mt-6 bg-gray-900 p-4 rounded-lg shadow-2xl">
+            <h2 class="text-2xl font-bold text-center mb-4">Combined Throughput vs. Time</h2>
+            <canvas id="throughputChart"></canvas>
+        </div>
+    </div>
+
+<script>
+    // --- GLOBAL CONTROLS ---
+    const btnStartPause = document.getElementById('btn-start-pause');
+    const btnReset = document.getElementById('btn-reset');
+    let isRunning = false;
+    let animationFrameId;
+    let lastTimestamp = 0;
+    let throughputSampler;
+
+    // --- CHART.JS INSTANCES ---
+    let attemptsChartPure, attemptsChartSlotted, throughputChart;
+    const MAX_CHART_POINTS = 50;
+    
+    // --- GLOBAL CONSTANTS ---
+    const SLOT_TIME = 1000;
+    const PACKET_DURATION = SLOT_TIME;
+
+    // --- SIMULATION CLASSES ---
+    class Hub {
+        constructor(x, y, radius) { this.x = x; this.y = y; this.radius = radius; this.reset(); }
+        reset() {
+            this.status = 'idle'; this.statusTimer = 0;
+            this.isReceiving = false; this.receiverUntil = 0; this.packetBeingReceived = null;
+            this.becameIdleAt = 0; // For Pure Aloha vulnerable period calculation
+        }
+        draw(ctx) {
+            ctx.save();
+            const pulseRadius = this.radius * 2 + 5 * Math.sin(Date.now() / 300);
+            ctx.beginPath(); ctx.arc(this.x, this.y, pulseRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(79, 70, 229, 0.3)'; ctx.fill();
+            const iconWidth = this.radius * 1.5, iconHeight = this.radius * 2.5;
+            const x = this.x - iconWidth / 2, y = this.y - iconHeight / 2;
+            let mainColor = '#4f46e5', strokeColor = '#818cf8';
+            if (this.status === 'collision') { mainColor = '#ef4444'; strokeColor = '#f87171'; }
+            else if (this.status === 'receiving') { mainColor = '#22c55e'; strokeColor = '#4ade80'; }
+            ctx.fillStyle = mainColor; ctx.strokeStyle = strokeColor; ctx.lineWidth = 2;
+            ctx.fillRect(x, y, iconWidth, iconHeight); ctx.strokeRect(x, y, iconWidth, iconHeight);
+            ctx.fillStyle = '#f59e0b'; ctx.fillRect(x + 4, y + 4, iconWidth - 8, 2);
+            ctx.fillStyle = '#9ca3af'; ctx.fillRect(x + 4, y + 8, iconWidth - 8, 2); ctx.fillRect(x + 4, y + 12, iconWidth - 8, 2);
+            ctx.restore();
+        }
+        update(deltaTime) { if(this.statusTimer > 0) { this.statusTimer -= deltaTime; if(this.statusTimer <= 0) this.status = 'idle'; } }
+        setStatus(newStatus, duration = 300) { this.status = newStatus; this.statusTimer = duration; }
+    }
+    class Node {
+        constructor(id, x, y, radius, hub) { this.id = id; this.x = x; this.y = y; this.radius = radius; this.hub = hub; this.visualStatus = 'idle'; this.visualStatusTimer = 0; this.color = '#3b82f6'; }
+        draw(ctx) {
+            if (this.visualStatus !== 'idle') {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 12, 0, Math.PI * 2); ctx.lineWidth = 3;
+                if (this.visualStatus === 'transmitting') ctx.strokeStyle = '#f59e0b';
+                if (this.visualStatus === 'collided') ctx.strokeStyle = '#ef4444';
+                if (this.visualStatus === 'success') ctx.strokeStyle = '#22c55e';
+                ctx.stroke();
+            }
+            const iconWidth = this.radius * 2.5, iconHeight = iconWidth * 0.75;
+            const x = this.x - iconWidth / 2, y = this.y - iconHeight / 2;
+            ctx.fillStyle = this.color; ctx.fillRect(x, y, iconWidth, iconHeight);
+            ctx.fillStyle = '#1f2937'; ctx.fillRect(x + 2, y + 2, iconWidth - 4, iconHeight - 4);
+            const standWidth = iconWidth / 3, standHeight = standWidth / 2;
+            ctx.fillStyle = this.color; ctx.fillRect(this.x - standWidth / 2, y + iconHeight, standWidth, standHeight);
+            const baseWidth = standWidth * 1.5, baseHeight = standHeight / 2;
+            ctx.fillRect(this.x - baseWidth / 2, y + iconHeight + standHeight, baseWidth, baseHeight);
+        }
+        update(deltaTime) { if (this.visualStatusTimer > 0) { this.visualStatusTimer -= deltaTime; if (this.visualStatusTimer <= 0) { this.visualStatus = 'idle'; this.color = '#3b82f6'; } } }
+        setVisualStatus(status) {
+            this.visualStatus = status; this.visualStatusTimer = 500;
+            if (status === 'transmitting') this.color = '#f59e0b'; if (status === 'collided') this.color = '#ef4444'; if (status === 'success') this.color = '#22c55e';
+        }
+    }
+    class Packet {
+        constructor(x, y, hub, sourceNode) { this.x = x; this.y = y; this.hub = hub; this.sourceNode = sourceNode; this.radius = 0; this.maxRadius = Math.hypot(hub.x - x, hub.y - y); this.speed = this.maxRadius / (SLOT_TIME / 16.67); this.reachedHub = false; this.isAttempt = false; this.isResolved = false; }
+        draw(ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
+        update(deltaTime) { if (!this.reachedHub) { this.radius += this.speed * (deltaTime / 16.67); if (this.radius >= this.maxRadius) this.reachedHub = true; } }
+    }
+
+    class Simulation {
+        constructor(config) {
+            this.config = config;
+            this.canvas = document.getElementById(config.canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            this.nodeCountSlider = document.getElementById(config.controls.nodeCountId);
+            this.nodeCountLabel = document.getElementById(config.controls.nodeCountLabelId);
+            this.loadSlider = document.getElementById(config.controls.loadId);
+            this.loadLabel = document.getElementById(config.controls.loadLabelId);
+            this.stats = {
+                total: document.getElementById(config.stats.totalId),
+                success: document.getElementById(config.stats.successId),
+                collision: document.getElementById(config.stats.collisionId),
+                throughput: document.getElementById(config.stats.throughputId),
+            };
+            this.slotTimerBar = document.getElementById(config.slotTimerBarId);
+            this.attemptsChart = config.attemptsChart;
+            this.reset();
+        }
+
+        reset() {
+            this.nodes = [];
+            this.packets = [];
+            this.hub = new Hub(this.canvas.width / 2, this.canvas.height / 2, 15);
+            this.totalTimeElapsed = 0;
+            this.successfulTransmissions = 0;
+            this.collidedPackets = 0;
+            this.totalAttempts = 0;
+            this.slotTimeCounter = 0;
+            this.setup();
+        }
+
+        setup() {
+            const container = this.canvas.parentElement;
+            const size = Math.min(container.clientWidth, window.innerHeight * 0.5);
+            this.canvas.width = size; this.canvas.height = size;
+            this.hub = new Hub(this.canvas.width / 2, this.canvas.height / 2, 15);
+            const nodeCount = parseInt(this.nodeCountSlider.value);
+            const radius = this.canvas.width / 2 - 40;
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i / nodeCount) * Math.PI * 2;
+                const x = this.hub.x + radius * Math.cos(angle);
+                const y = this.hub.y + radius * Math.sin(angle);
+                this.nodes.push(new Node(i, x, y, 8, this.hub));
+            }
+            this.updateStats();
+            this.draw();
+        }
+
+        runFrame(deltaTime, timestamp) {
+            this.totalTimeElapsed += deltaTime;
+
+            // 1. Generate Packets
+            const isSlotBoundary = this.config.mode === 'slotted' && (this.slotTimeCounter + deltaTime >= SLOT_TIME);
+            if (this.config.mode === 'slotted') {
+                this.slotTimeCounter = (this.slotTimeCounter + deltaTime) % SLOT_TIME;
+                if (this.slotTimerBar) this.slotTimerBar.style.width = `${(this.slotTimeCounter / SLOT_TIME) * 100}%`;
+            }
+
+            this.nodes.forEach(node => {
+                const G = parseFloat(this.loadSlider.value) / 10;
+                const probPerNodePerSlot = G / this.nodes.length;
+                let decisionProb = 0;
+
+                if (this.config.mode === 'slotted') {
+                    if (isSlotBoundary) decisionProb = probPerNodePerSlot;
+                } else {
+                    decisionProb = probPerNodePerSlot * (deltaTime / SLOT_TIME);
+                }
+
+                if (Math.random() < decisionProb) {
+                    node.setVisualStatus('transmitting');
+                    this.packets.push(new Packet(node.x, node.y, this.hub, node));
+                }
+            });
+
+            // 2. Process Hub Events
+            if (this.hub.isReceiving && timestamp >= this.hub.receiverUntil) {
+                this.successfulTransmissions++;
+                this.hub.packetBeingReceived.sourceNode.setVisualStatus('success');
+                this.hub.packetBeingReceived.isResolved = true;
+                addAttemptToGraph(this.attemptsChart, true);
+                this.hub.isReceiving = false; this.hub.packetBeingReceived = null; this.hub.setStatus('idle');
+                this.hub.becameIdleAt = timestamp;
+            }
+
+            const newlyArrivedPackets = this.packets.filter(p => p.reachedHub && !p.isAttempt);
+            if (newlyArrivedPackets.length > 0) {
+                this.totalAttempts += newlyArrivedPackets.length;
+                newlyArrivedPackets.forEach(p => p.isAttempt = true);
+
+                if (this.hub.isReceiving) {
+                    this.hub.setStatus('collision');
+                    this.collidedPackets++;
+                    this.hub.packetBeingReceived.sourceNode.setVisualStatus('collided');
+                    this.hub.packetBeingReceived.isResolved = true;
+                    addAttemptToGraph(this.attemptsChart, false);
+                    newlyArrivedPackets.forEach(p => { this.collidedPackets++; p.sourceNode.setVisualStatus('collided'); p.isResolved = true; addAttemptToGraph(this.attemptsChart, false); });
+                    this.hub.isReceiving = false; this.hub.packetBeingReceived = null;
+                    this.hub.becameIdleAt = timestamp;
+                } else {
+                    const justBecameIdle = (timestamp - this.hub.becameIdleAt < PACKET_DURATION);
+                    if (this.config.mode === 'pure' && justBecameIdle) {
+                        this.hub.setStatus('collision');
+                        newlyArrivedPackets.forEach(p => { this.collidedPackets++; p.sourceNode.setVisualStatus('collided'); p.isResolved = true; addAttemptToGraph(this.attemptsChart, false); });
+                        this.hub.becameIdleAt = timestamp;
+                    }
+                    else if (newlyArrivedPackets.length > 1) {
+                        this.hub.setStatus('collision');
+                        newlyArrivedPackets.forEach(p => { this.collidedPackets++; p.sourceNode.setVisualStatus('collided'); p.isResolved = true; addAttemptToGraph(this.attemptsChart, false); });
+                        this.hub.becameIdleAt = timestamp;
+                    } else {
+                        const packet = newlyArrivedPackets[0];
+                        this.hub.isReceiving = true; this.hub.receiverUntil = timestamp + PACKET_DURATION; this.hub.packetBeingReceived = packet; this.hub.setStatus('receiving');
+                    }
+                }
+            }
+
+            // 3. Update and Render
+            this.hub.update(deltaTime);
+            this.nodes.forEach(node => node.update(deltaTime));
+            this.packets.forEach(packet => packet.update(deltaTime));
+            this.packets = this.packets.filter(p => !p.isResolved);
+            this.draw();
+            this.updateStats();
+        }
+
+        draw() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.hub.draw(this.ctx);
+            this.packets.forEach(packet => packet.draw(this.ctx));
+            this.nodes.forEach(node => node.draw(this.ctx));
+        }
+
+        updateStats() {
+            this.stats.total.textContent = this.totalAttempts;
+            this.stats.success.textContent = this.successfulTransmissions;
+            this.stats.collision.textContent = this.collidedPackets;
+            const timeInSlots = this.totalTimeElapsed / SLOT_TIME;
+            const throughputS = timeInSlots > 0 ? this.successfulTransmissions / timeInSlots : 0;
+            this.stats.throughput.textContent = `${(throughputS * 100).toFixed(2)}%`;
+        }
+        
+        getCumulativeThroughput() {
+            const timeInSlots = this.totalTimeElapsed / SLOT_TIME;
+            return timeInSlots > 1 ? this.successfulTransmissions / timeInSlots : 0;
+        }
+    }
+
+    // --- INITIALIZATION ---
+    let pureAlohaSim, slottedAlohaSim;
+
+    function initializeSimulations() {
+        pureAlohaSim = new Simulation({
+            mode: 'pure',
+            canvasId: 'simCanvasPure',
+            attemptsChart: attemptsChartPure,
+            slotTimerBarId: null,
+            controls: {
+                nodeCountId: 'node-count-pure', nodeCountLabelId: 'node-count-label-pure',
+                loadId: 'offered-load-pure', loadLabelId: 'offered-load-label-pure',
+            },
+            stats: {
+                totalId: 'stat-total-pure', successId: 'stat-success-pure',
+                collisionId: 'stat-collision-pure', throughputId: 'stat-throughput-pure',
+            }
+        });
+
+        slottedAlohaSim = new Simulation({
+            mode: 'slotted',
+            canvasId: 'simCanvasSlotted',
+            attemptsChart: attemptsChartSlotted,
+            slotTimerBarId: 'slot-timer-bar-slotted',
+            controls: {
+                nodeCountId: 'node-count-slotted', nodeCountLabelId: 'node-count-label-slotted',
+                loadId: 'offered-load-slotted', loadLabelId: 'offered-load-label-slotted',
+            },
+            stats: {
+                totalId: 'stat-total-slotted', successId: 'stat-success-slotted',
+                collisionId: 'stat-collision-slotted', throughputId: 'stat-throughput-slotted',
+            }
+        });
+
+        // Link controls to their respective simulations
+        pureAlohaSim.nodeCountSlider.addEventListener('input', (e) => { pureAlohaSim.nodeCountLabel.textContent = e.target.value; if (!isRunning) pureAlohaSim.reset(); });
+        pureAlohaSim.loadSlider.addEventListener('input', (e) => { pureAlohaSim.loadLabel.textContent = (e.target.value / 10).toFixed(1); });
+        slottedAlohaSim.nodeCountSlider.addEventListener('input', (e) => { slottedAlohaSim.nodeCountLabel.textContent = e.target.value; if (!isRunning) slottedAlohaSim.reset(); });
+        slottedAlohaSim.loadSlider.addEventListener('input', (e) => { slottedAlohaSim.loadLabel.textContent = (e.target.value / 10).toFixed(1); });
+    }
+
+    function initializeAllCharts() {
+        if (attemptsChartPure) attemptsChartPure.destroy();
+        attemptsChartPure = new Chart(document.getElementById('attemptsChartPure').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Attempt', data: [], backgroundColor: [] }] },
+            options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { display: false } }, y: { display: false, beginAtZero: true, max: 1.2 } } }
+        });
+
+        if (attemptsChartSlotted) attemptsChartSlotted.destroy();
+        attemptsChartSlotted = new Chart(document.getElementById('attemptsChartSlotted').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Attempt', data: [], backgroundColor: [] }] },
+            options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { display: false } }, y: { display: false, beginAtZero: true, max: 1.2 } } }
+        });
+
+        if (throughputChart) throughputChart.destroy();
+        throughputChart = new Chart(document.getElementById('throughputChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Pure Aloha', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.2)', fill: false, tension: 0.4, pointRadius: 0 },
+                    { label: 'Slotted Aloha', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.2)', fill: false, tension: 0.4, pointRadius: 0 }
+                ]
+            },
+            options: {
+                plugins: { legend: { labels: { color: '#d1d5db' } } },
+                scales: {
+                    x: { title: { display: true, text: 'Time (s)', color: '#9ca3af' }, ticks: { color: '#9ca3af' } },
+                    y: { title: { display: true, text: 'Throughput (S)', color: '#9ca3af' }, min: 0, max: 0.45, ticks: { color: '#9ca3af', callback: v => `${(v*100).toFixed(0)}%` } }
+                }
+            }
+        });
+    }
+
+    function addAttemptToGraph(chartInstance, success) {
+        const data = chartInstance.data.datasets[0].data;
+        const colors = chartInstance.data.datasets[0].backgroundColor;
+        const labels = chartInstance.data.labels;
+        data.push(1); labels.push(''); colors.push(success ? '#22c55e' : '#ef4444');
+        if (data.length > MAX_CHART_POINTS) { data.shift(); colors.shift(); labels.shift(); }
+        chartInstance.update('none');
+    }
+
+    function addThroughputDataPoint(time, pureS, slottedS) {
+        const labels = throughputChart.data.labels;
+        const pureData = throughputChart.data.datasets[0].data;
+        const slottedData = throughputChart.data.datasets[1].data;
+        const timeLabel = (time / 1000).toFixed(0);
+
+        if (labels.length === 0 || labels[labels.length - 1] !== timeLabel) {
+            labels.push(timeLabel);
+            pureData.push(pureS);
+            slottedData.push(slottedS);
+        } else {
+            pureData[labels.length - 1] = pureS;
+            slottedData[labels.length - 1] = slottedS;
+        }
+        
+        if (labels.length > MAX_CHART_POINTS) {
+            labels.shift(); pureData.shift(); slottedData.shift();
+        }
+        throughputChart.update('none');
+    }
+
+    function globalReset() {
+        isRunning = false;
+        btnStartPause.textContent = 'Start';
+        btnStartPause.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+        btnStartPause.classList.add('bg-green-600', 'hover:bg-green-700');
+        cancelAnimationFrame(animationFrameId);
+        clearInterval(throughputSampler);
+        lastTimestamp = 0;
+        initializeAllCharts();
+        initializeSimulations();
+    }
+
+    function globalSimulationLoop(timestamp) {
+        if (!isRunning) return;
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const deltaTime = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
+
+        pureAlohaSim.runFrame(deltaTime, timestamp);
+        slottedAlohaSim.runFrame(deltaTime, timestamp);
+
+        animationFrameId = requestAnimationFrame(globalSimulationLoop);
+    }
+
+    btnStartPause.addEventListener('click', () => {
+        isRunning = !isRunning;
+        if (isRunning) {
+            btnStartPause.textContent = 'Pause';
+            btnStartPause.classList.remove('bg-green-600');
+            btnStartPause.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            lastTimestamp = performance.now();
+            throughputSampler = setInterval(() => {
+                const pureS = pureAlohaSim.getCumulativeThroughput();
+                const slottedS = slottedAlohaSim.getCumulativeThroughput();
+                const totalTime = pureAlohaSim.totalTimeElapsed; // Use one as the master time
+                addThroughputDataPoint(totalTime, pureS, slottedS);
+            }, 1000);
+            animationFrameId = requestAnimationFrame(globalSimulationLoop);
+        } else {
+            btnStartPause.textContent = 'Start';
+            btnStartPause.classList.add('bg-green-600', 'hover:bg-green-700');
+            btnStartPause.classList.remove('bg-yellow-600');
+            clearInterval(throughputSampler);
+            cancelAnimationFrame(animationFrameId);
+        }
+    });
+
+    btnReset.addEventListener('click', globalReset);
+    window.addEventListener('resize', globalReset);
+
+    // --- INITIALIZATION ---
+    initializeAllCharts();
+    initializeSimulations();
+
+</script>
+</body>
+</html>
